@@ -24,6 +24,8 @@ type INode interface {
 	GetData() interface{}
 	// IsRoot 判断当前节点是否是顶层根节点
 	IsRoot() bool
+	GetChildren() []INode
+	AppendChilren(INode)
 }
 type INodes []INode
 
@@ -37,11 +39,11 @@ func (nodes INodes) Less(i, j int) bool {
 	return nodes[i].GetId() < nodes[j].GetId()
 }
 
-// GenerateTree 自定义的结构体实现 INode 接口后调用此方法生成树结构
+// GenerateTreeSelected 自定义的结构体实现 INode 接口后调用此方法生成树结构
 // nodes 需要生成树的节点
 // selectedNode 生成树后选中的节点
 // menuTrees 生成成功后的树结构对象
-func GenerateTree(nodes, selectedNodes []INode) (trees []Tree) {
+func GenerateTreeSelected(nodes, selectedNodes []INode) (trees []Tree) {
 	trees = []Tree{}
 	// 定义顶层根和子节点
 	var roots, childs []INode
@@ -61,7 +63,7 @@ func GenerateTree(nodes, selectedNodes []INode) (trees []Tree) {
 		// 递归之前，根据父节点确认 childTree 的选中状态
 		childTree.Selected = nodeSelected(v, selectedNodes, childTree.Children)
 		// 递归
-		recursiveTree(childTree, childs, selectedNodes)
+		recursiveTreeSelected(childTree, childs, selectedNodes)
 		// 递归之后，根据子节点确认 childTree 的选中状态
 		if !childTree.Selected {
 			childTree.Selected = nodeSelected(v, selectedNodes, childTree.Children)
@@ -75,11 +77,30 @@ func GenerateTree(nodes, selectedNodes []INode) (trees []Tree) {
 	return
 }
 
-// recursiveTree 递归生成树结构
+// GenerateTree 生成树
+func GenerateTree(nodes, selectedNodes, result []INode) {
+	// 定义顶层根和子节点
+	var roots, childs []INode
+	for _, v := range nodes {
+		if v.IsRoot() {
+			// 判断顶层根节点
+			roots = append(roots, v)
+		}
+		childs = append(childs, v)
+	}
+
+	for _, v := range roots {
+		// 递归
+		recursiveTree(v, childs, selectedNodes)
+		result = append(result, v)
+	}
+}
+
+// recursiveTreeSelected 递归生成树结构
 // tree 递归的树对象
 // nodes 递归的节点
 // selectedNodes 选中的节点
-func recursiveTree(tree *Tree, nodes, selectedNodes []INode) {
+func recursiveTreeSelected(tree *Tree, nodes, selectedNodes []INode) {
 	data := tree.Data.(INode)
 
 	for _, v := range nodes {
@@ -94,7 +115,7 @@ func recursiveTree(tree *Tree, nodes, selectedNodes []INode) {
 			}
 			// 递归之前，根据子节点和父节点确认 childTree 的选中状态
 			childTree.Selected = nodeSelected(v, selectedNodes, childTree.Children) || tree.Selected
-			recursiveTree(childTree, nodes, selectedNodes)
+			recursiveTreeSelected(childTree, nodes, selectedNodes)
 
 			if !childTree.Selected {
 				// 递归之后，根据子节点确认 childTree 的选中状态
@@ -105,6 +126,19 @@ func recursiveTree(tree *Tree, nodes, selectedNodes []INode) {
 			// 递归之后，根据子节确认是否是叶子节点
 			childTree.Leaf = len(childTree.Children) == 0
 			tree.Children = append(tree.Children, *childTree)
+		}
+	}
+}
+
+func recursiveTree(tree INode, nodes, selectedNodes []INode) {
+
+	for _, v := range nodes {
+		if v.IsRoot() {
+			// 如果当前节点是顶层根节点就跳过
+			continue
+		}
+		if tree.GetId() == v.GetFatherId() {
+			v.AppendChilren(v)
 		}
 	}
 }
