@@ -78,7 +78,8 @@ func GenerateTreeSelected(nodes, selectedNodes []INode) (trees []Tree) {
 }
 
 // GenerateTree 生成树
-func GenerateTree(nodes, selectedNodes, result []INode) {
+func GenerateTree(nodes, selectedNodes, result []INode) []INode {
+	var trees []INode
 	// 定义顶层根和子节点
 	var roots, childs []INode
 	for _, v := range nodes {
@@ -92,8 +93,9 @@ func GenerateTree(nodes, selectedNodes, result []INode) {
 	for _, v := range roots {
 		// 递归
 		recursiveTree(v, childs, selectedNodes)
-		result = append(result, v)
+		trees = append(trees, v)
 	}
+	return trees
 }
 
 // recursiveTreeSelected 递归生成树结构
